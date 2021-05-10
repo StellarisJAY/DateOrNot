@@ -1,6 +1,8 @@
 package com.jay.date.service.impl;
 
 import com.jay.date.service.GeoService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.*;
 import org.springframework.data.redis.connection.RedisGeoCommands;
@@ -22,10 +24,11 @@ public class GeoServiceImpl implements GeoService {
      * 缓存key
      */
     private static final String CACHE_KEY = "GEO_TEST";
-
+    private final Logger logger;
     @Autowired
     public GeoServiceImpl(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
+        this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
 
@@ -36,15 +39,28 @@ public class GeoServiceImpl implements GeoService {
         }
         // 封装坐标
         Point point = new Point(longitude, latitude);
+        Long s1 = redisTemplate.opsForZSet().remove(CACHE_KEY, member);
+        logger.info("清除用户：id=" + member + "过期位置信息, 状态：" + s1);
+        Long status = 0L;
         // geoAdd操作
-        Long status = redisTemplate.opsForGeo().add(CACHE_KEY, point, member);
-
-        System.out.println(status);
+        if(s1 != null){
+            status = redisTemplate.opsForGeo().add(CACHE_KEY, point, member);
+        }
         return status != null && status > 0;
     }
 
     @Override
-    public GeoResults<RedisGeoCommands.GeoLocation<String>> listLocationsInRadius(String member, Double distance, Metric metric, int limit) {
+    public Boolean deleteUserLocation(Integer userId) {
+        if(userId == null || userId < 0){
+            return false;
+        }
+        Long status = redisTemplate.opsForZSet().remove(CACHE_KEY, userId.toString());
+        return status != null && status > 0;
+    }
+
+    @Override
+    public GeoResults<RedisGeoCommands.GeoLocation<String>> listLocationsInRadius(String member, Double distance,
+                                                                                  Metric metric, int limit) {
         if(member == null || member.isEmpty() || distance == null || distance <= 0 || metric == null || limit <= 0){
             return null;
         }
@@ -62,7 +78,8 @@ public class GeoServiceImpl implements GeoService {
     }
 
     @Override
-    public GeoResults<RedisGeoCommands.GeoLocation<String>> listLocationsInRadius(Double latitude, Double longitude, Double distance, Metric metric, int limit) {
+    public GeoResults<RedisGeoCommands.GeoLocation<String>> listLocationsInRadius(Double latitude, Double longitude,
+                                                                                  Double distance, Metric metric, int limit) {
         if(invalidCoordinates(latitude, longitude) || distance == null || distance <= 0 || metric == null || limit <= 0){
             return null;
         }

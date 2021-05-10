@@ -1,5 +1,7 @@
 package com.jay.date.service.impl;
 
+import com.jay.date.mapper.MatchingMapper;
+import com.jay.date.model.MatchedUserDTO;
 import com.jay.date.model.NearbyUserVO;
 import com.jay.date.service.GeoService;
 import com.jay.date.service.NearbyUserService;
@@ -12,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * @author Jay
@@ -22,6 +23,7 @@ public class NearbyUserServiceImpl implements NearbyUserService {
 
     private final GeoService geoService;
 
+    private final MatchingMapper matchingMapper;
     /**
      * 默认返回 2km
      */
@@ -33,8 +35,9 @@ public class NearbyUserServiceImpl implements NearbyUserService {
     private static final int MAX_LIMIT = 20;
 
     @Autowired
-    public NearbyUserServiceImpl(GeoService geoService) {
+    public NearbyUserServiceImpl(GeoService geoService, MatchingMapper matchingMapper) {
         this.geoService = geoService;
+        this.matchingMapper = matchingMapper;
     }
 
     @Override
@@ -72,13 +75,16 @@ public class NearbyUserServiceImpl implements NearbyUserService {
             double latitude = result.getContent().getPoint().getY();
             double longitude = result.getContent().getPoint().getX();
 
-            // 从缓存获取各种数据
-            String username = "张三";
-            Integer age = 20;
-            Integer gender = new Random().nextInt(2);
-            String description = "hello world hello world hello ...";
-            NearbyUserVO userVO = new NearbyUserVO(uId, username, gender, age, description, distance, latitude, longitude);
-            nearbyUsers.add(userVO);
+            MatchedUserDTO userDTO = matchingMapper.getMatchedUserInfo(uId);
+            if(userDTO != null){
+                String username = userDTO.getUser_name();
+                int gender = userDTO.getSex();
+                String birthday = userDTO.getBirthday();
+                String description = userDTO.getIntroduction();
+                String portraitUrl = userDTO.getHead_image_url();
+                NearbyUserVO userVO = new NearbyUserVO(uId, username, gender, birthday, description, portraitUrl, distance, latitude, longitude);
+                nearbyUsers.add(userVO);
+            }
         });
 
         return nearbyUsers;

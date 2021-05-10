@@ -32,6 +32,13 @@ public class UserLocationController {
     }
 
 
+    /**
+     * 更新当前用户的位置
+     * @param userId 用户id
+     * @param latitude 纬度
+     * @param longitude 经度
+     * @return 更新状态
+     */
     @PostMapping()
     public Boolean saveUserLocation(@RequestParam("userId") Integer userId,
                                     @RequestParam("latitude") Double latitude,
@@ -40,12 +47,25 @@ public class UserLocationController {
         return geoService.saveUserLocation(member, latitude, longitude);
     }
 
+    /**
+     * 获取该用户附近的用户
+     * @param userId 用户id
+     * @param limit 获取数量
+     * @return 附近用户集合
+     */
     @GetMapping("/nearby/{userId}")
     public List<NearbyUserVO> listNearbyUsers(@PathVariable("userId") Integer userId,
                                               @RequestParam("limit") Integer limit){
         return nearbyUserService.listNearbyUsers(userId, limit);
     }
 
+    /**
+     * 获取某坐标附近的所有用户
+     * @param latitude 纬度
+     * @param longitude 经度
+     * @param limit 获取数量
+     * @return 附近用户集合
+     */
     @GetMapping("/nearby")
     public List<NearbyUserVO> listNearbyUsers(@RequestParam(value = "latitude") Double latitude,
                                               @RequestParam(value = "longitude") Double longitude,
@@ -53,6 +73,12 @@ public class UserLocationController {
         return nearbyUserService.listNearbyUsers(latitude, longitude, limit);
     }
 
+    /**
+     * 获取两个用户之间的距离
+     * @param userId 用户1id
+     * @param otherUserId 用户2 id
+     * @return 距离 单位km
+     */
     @GetMapping("/distance")
     public Double getDistanceBetween(@RequestParam(value = "userId") Integer userId,
                                      @RequestParam(value = "otherUserId") Integer otherUserId){
@@ -65,6 +91,11 @@ public class UserLocationController {
         }
     }
 
+    /**
+     * 获取用户坐标
+     * @param userId 用户id
+     * @return 坐标点
+     */
     @GetMapping("/{userId}")
     public Map<String, Double> getUserLocation(@PathVariable("userId") Integer userId){
         try{
@@ -74,6 +105,16 @@ public class UserLocationController {
             logger.error("获取坐标参数错误");
             return null;
         }
+    }
+
+    /**
+     * 删除用户位置信息
+     * @param userId 用户id
+     * @return 删除状态
+     */
+    @DeleteMapping()
+    public Boolean deleteUserLocation(@RequestParam("userId") Integer userId){
+        return geoService.deleteUserLocation(userId);
     }
 
 

@@ -60,4 +60,7 @@ public interface GeoService {
      * @return 坐标点
      */
     Map<String, Double> getUserLocation(Integer userId);
+
+
+    Boolean deleteUserLocation(Integer userId);
 }
